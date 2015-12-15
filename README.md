@@ -293,6 +293,36 @@ f5_ltm_irule "irule_name" do
 end
 ```
 
+Partitions or Folders
+=====================
+
+F5 LTM supports partitions (or folders, terminology changed with versions). This cookbook allows you to create resources into any available partition. The default is /Common but you change it simply by prepending the resource name with the partition name.
+
+```
+# this will go into /Common
+f5_ltm_node '10.10.10.10' do
+  f5 'f5-test.test.com'
+  enabled true
+end
+
+# this will be create to /PartitionName
+f5_ltm_node '/PartititionName/10.10.10.10' do
+  f5 'f5-test.test.com'
+  enabled true
+end
+```
+
+The only expection to this is the `f5_vip` resource which would require an additional parameter:
+
+```
+f5_vip 'testing.test.com' do
+  f5 'test-f5.test.com'
+  partition '/PartititionName'
+  nodes ['10.10.10.10', '10.10.10.11']
+  [etc]
+end
+```
+
 Recipes
 =======
 
