@@ -305,7 +305,7 @@ f5_ltm_node '10.10.10.10' do
   enabled true
 end
 
-# this will be create to /PartitionName
+# this will be created to /PartitionName
 f5_ltm_node '/PartititionName/10.10.10.10' do
   f5 'f5-test.test.com'
   enabled true
