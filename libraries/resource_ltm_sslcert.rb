@@ -24,7 +24,7 @@ class Chef
     #
     # Chef Resource for F5 LTM iRule
     #
-    class  F5LtmSslcert < Chef::Resource
+    class F5LtmSslcert < Chef::Resource
       def initialize(name, run_context = nil)
         super
         @resource_name = :f5_ltm_sslcert
@@ -66,13 +66,13 @@ class Chef
       attr_accessor :exists_key, :exists_cert, :update_key, :update_cert
 
       private
+
       def set_defaults
         @mode = 'MANAGEMENT_MODE_DEFAULT'
         @key = ''
         @cert = ''
         @override = false
       end
-
     end
   end
 end

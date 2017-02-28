@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-require 'load_balancer/ltm/monitors/monitor'
+require 'load_balancer_ltm_monitors_monitor'
 require 'forwardable'
 
 module F5
@@ -42,15 +42,14 @@ module F5
         # The names of all the monitors
         #
         def names
-          @monitors.map { |m| m.name }
+          @monitors.map(&:name)
         end
 
         #
         # Refresh all monitor data
         #
-        def refresh_all
-          @monitors = @client['LocalLB.Monitor'].get_template_list
-                                                .map { |m| F5::LoadBalancer::Ltm::Monitors::Monitor.new(m) }
+        def refresh_all # rubocop:disable AbcSize, MethodLength
+          @monitors = @client['LocalLB.Monitor'].get_template_list.map { |m| F5::LoadBalancer::Ltm::Monitors::Monitor.new(m) }
           @monitors.reject! { |m| root_templates.include? m.name }
           refresh_parent
           refresh_destination

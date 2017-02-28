@@ -24,7 +24,7 @@ class Chef
     #
     # Chef Resource for F5 LTM Node
     #
-    class  F5LtmStringClass < Chef::Resource
+    class F5LtmStringClass < Chef::Resource
       def initialize(name, run_context = nil)
         super
         @resource_name = :f5_ltm_string_class
@@ -42,7 +42,7 @@ class Chef
       end
 
       def records(arg = nil)
-        set_or_return(:records, arg, :kind_of => [Array,Hash], :required => true)
+        set_or_return(:records, arg, :kind_of => [Array, Hash], :required => true)
       end
 
       def f5(arg = nil)

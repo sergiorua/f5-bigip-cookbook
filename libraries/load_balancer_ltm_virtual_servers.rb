@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-require 'load_balancer/ltm/virtual_servers/virtual_server'
+require 'load_balancer_ltm_virtual_servers_virtual_server'
 require 'forwardable'
 
 module F5
@@ -41,7 +41,7 @@ module F5
         # The names of all the monitors
         #
         def names
-          @virtual_servers.map { |v| v.name }
+          @virtual_servers.map(&:name)
         end
 
         #
@@ -128,8 +128,7 @@ module F5
           profiles = @client['LocalLB.VirtualServer'].get_profile(names)
 
           @virtual_servers.each_with_index do |vs, idx|
-            vs.profiles = F5::Helpers.soap_mapping_to_hash(profiles[idx])
-                          .each { |p| p.delete('profile_type') }
+            vs.profiles = F5::Helpers.soap_mapping_to_hash(profiles[idx]).each { |p| p.delete('profile_type') }
           end
         end
 

@@ -20,7 +20,7 @@
 # add currrent dir to load path
 $LOAD_PATH << File.dirname(__FILE__)
 
-require 'load_balancer/ltm'
+require 'load_balancer_ltm'
 
 module F5
   # The F5 device
@@ -33,19 +33,19 @@ module F5
       @client = client
     end
 
-    def change_folder(folder='Common')
-      if folder.include?('/')
-        folder = folder.split('/')[1]
-      else
-        folder = 'Common'
+    def change_folder(folder = 'Common') # rubocop:disable MethodLength
+      folder = if folder.include?('/')
+                 folder.split('/')[1]
+               else
+                 'Common'
+               end
+      unless @active_folder == folder
+        @ltm = nil
+        Chef::Log.info "Setting #{folder} as active folder"
+        @client['System.Session'].set_active_folder("/#{folder}")
+        @active_folder = folder
       end
-      return true if @active_folder == folder
-
-      @ltm = nil
-      Chef::Log.info "Setting #{folder} as active folder"
-      @client['System.Session'].set_active_folder("/#{folder}")
-      @active_folder = folder
-      return true
+      true
     end
 
     #
@@ -60,8 +60,8 @@ module F5
     #
     def device_groups
       @device_groups ||= client['Management.DeviceGroup']
-                           .get_list
-                           .delete_if { |g| g =~ /device_trust_group/ || g == '/Common/gtm' }
+                         .get_list
+                         .delete_if { |g| g =~ /device_trust_group/ || g == '/Common/gtm' }
     end
 
     #

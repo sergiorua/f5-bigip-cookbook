@@ -31,36 +31,32 @@ class Chef
         false
       end
 
-      def load_current_resource # rubocop:disable MethodLength
+      def load_current_resource # rubocop:disable MethodLength, AbcSize
         @current_resource = Chef::Resource::F5LtmPool.new(@new_resource.name)
         @current_resource.name(@new_resource.name)
         @current_resource.pool_name(@new_resource.pool_name)
 
-        load_balancer.change_folder(@new_resource.pool_name) 
-        pool = load_balancer.ltm.pools.find { |p| p.name =~ /(^|\/)#{@new_resource.pool_name}$/ or p.name == @new_resource.pool_name }
+        load_balancer.change_folder(@new_resource.pool_name)
+        pool = load_balancer.ltm.pools.find { |p| p.name =~ %r{(^|\/)#{@new_resource.pool_name}$} || p.name == @new_resource.pool_name }
 
         @current_resource.exists = !pool.nil?
 
-        return @current_resource unless @current_resource.exists
-
         # If pool exists load it's current state
-        @current_resource.lb_method(pool.lb_method)
-        @current_resource.description(pool.description)
-        @current_resource.monitors(pool.monitors['monitor_templates'])
-        @current_resource.monitor_type = pool.monitors['type']
-        @current_resource.members(pool.members)
+        if @current_resource.exists
+          @current_resource.lb_method(pool.lb_method)
+          @current_resource.description(pool.description)
+          @current_resource.monitors(pool.monitors['monitor_templates'])
+          @current_resource.monitor_type = pool.monitors['type']
+          @current_resource.members(pool.members)
+        end
         @current_resource
       end
 
-      def action_create
+      def action_create # rubocop:disable AbcSize, CyclomaticComplexity
         create_pool unless current_resource.exists
-
         set_lb_method unless current_resource.lb_method == new_resource.lb_method
-
         set_description unless current_resource.description == new_resource.description
-
         set_members unless missing_members.empty? && extra_members.empty?
-
         set_health_monitors unless current_health_monitors == new_health_monitors
       end
 
@@ -73,14 +69,14 @@ class Chef
       #
       # Create a new pool given new_resource attributes
       #
-      def create_pool
+      def create_pool # rubocop:disable MethodLength, AbcSize
         converge_by("Create #{new_resource} pool") do
           Chef::Log.info "Create #{new_resource} pool"
           members = new_resource.members.map do |member|
             { 'address' => member['address'], 'port' => member['port'] }
           end
 
-          load_balancer.change_folder(new_resource.pool_name) 
+          load_balancer.change_folder(new_resource.pool_name)
           load_balancer.client['LocalLB.Pool'].create_v2([new_resource.pool_name], [new_resource.lb_method], [members])
 
           current_resource.lb_method(new_resource.lb_method)
@@ -95,7 +91,7 @@ class Chef
       #
       # Set load balancing method given new_resource lb_method attribute
       #
-      def set_lb_method
+      def set_lb_method # rubocop:disable AbcSize
         converge_by("Update #{new_resource} pool lb method") do
           Chef::Log.info "Update #{new_resource} pool lb method"
           load_balancer.client['LocalLB.Pool'].set_lb_method([new_resource.pool_name], [new_resource.lb_method])
@@ -105,11 +101,10 @@ class Chef
         end
       end
 
-
       #
       # Set descrition
       #
-      def set_description
+      def set_description # rubocop:disable AbcSize
         converge_by("Update #{new_resource} pool description") do
           Chef::Log.info "Update #{new_resource} pool description"
           load_balancer.client['LocalLB.Pool'].set_description([new_resource.pool_name], [new_resource.description])
@@ -119,11 +114,10 @@ class Chef
         end
       end
 
-
       #
       # Set pool members for pool given new_resource members parameter
       #
-      def set_members
+      def set_members # rubocop:disable AbcSize, MethodLength
         converge_by("Update #{new_resource} with additional members") do
           Chef::Log.info "Update #{new_resource} with additional members"
           members = []
@@ -144,15 +138,18 @@ class Chef
       #
       # Set pool health monitors given new_resource monitors parameter
       #
-      def set_health_monitors
+      def set_health_monitors # rubocop:disable AbcSize, MethodLength
         converge_by("Update #{new_resource} monitors") do
           Chef::Log.info "Update #{new_resource} monitors"
-          load_balancer.client['LocalLB.Pool'].set_monitor_association([
-            'pool_name' => new_resource.pool_name,
-            'monitor_rule' => {
-              'type' => monitor_rule_type, 'quorum' => 0,
-              'monitor_templates' => new_resource.monitors
-            }])
+          load_balancer.client['LocalLB.Pool'].set_monitor_association(
+            [
+              'pool_name' => new_resource.pool_name,
+              'monitor_rule' => {
+                'type' => monitor_rule_type, 'quorum' => 0,
+                'monitor_templates' => new_resource.monitors
+              }
+            ]
+          )
           current_resource.monitors(new_resource.monitors)
 
           new_resource.updated_by_last_action(true)
@@ -197,7 +194,7 @@ class Chef
       #
       def current_health_monitors
         # Strip folder (good/bad?)
-        current_resource.monitors.map { |m| m.gsub(/\/.*\//, '') }.uniq.sort
+        current_resource.monitors.map { |m| m.gsub(%r{\/.*\/}, '') }.uniq.sort
       end
 
       #
@@ -207,7 +204,7 @@ class Chef
       #   monitors defined for pool to have
       #
       def new_health_monitors
-        new_resource.monitors.map { |m| m.gsub(/\/.*\//, '') }.uniq.sort
+        new_resource.monitors.map { |m| m.gsub(%r{\/.*\/}, '') }.uniq.sort
       end
 
       #
@@ -222,7 +219,7 @@ class Chef
         # Strip off folder (good/bad?)
         # Set port to String from Integer
         members.each do |member|
-          member['address'] = member['address'].gsub(/\/.*\//, '')
+          member['address'] = member['address'].gsub(%r{\/.*\/}, '')
           member['port'] = member['port'].to_s
         end
         members
@@ -239,7 +236,7 @@ class Chef
 
         # Strip off folder (good/bad?)
         members.each do |member|
-          member['address'] = member['address'].gsub(/\/.*\//, '')
+          member['address'] = member['address'].gsub(%r{\/.*\/}, '')
           member['port'] = member['port'].to_s
         end
         members
